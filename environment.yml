@@ -1,0 +1,6 @@
+name: pzsvc-shape
+channels:
+  - CONDA_CHANNEL
+dependencies:
+  - bfalg-shape
+  - pzsvc-exec
