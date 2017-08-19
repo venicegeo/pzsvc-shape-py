@@ -82,9 +82,5 @@ node {
             }
         }
     }
-
-    stage("Phase One Integration Test") {
-        sh "bash ci/test_shape.sh"
-    }
 }
 
