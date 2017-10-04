@@ -15,11 +15,6 @@ node {
 	def appvers = sh(script: """git describe --long --tags --always | sed 's/\\./-/'g""", returnStdout: true).trim()
     def appName = "pzsvc-shape-${appvers}"
 
-	stage("Archive") {
-		//todo
-	}
-
-
     stage("Phase One Deploy") {
         if(!fileExists('.cf')) {
             sh "mkdir -p .cf"
