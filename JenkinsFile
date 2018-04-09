@@ -3,9 +3,25 @@
 node {
 	def root = pwd()
 
+  stage("Config") {
+    // clone the configuration repository and copy the current configuration
+    def configDir = "${root}/configuration"
+    def configFile = "${root}/config.json"
+    dir(configDir) {
+      git url: "${env.CONFIGURATION_URL}", credentialsId: "${env.CONFIGURATION_CREDS}"
+      sh "mv ${configDir}/${ENVIRONMENT}-config.json ${configFile}"
+      deleteDir()
+    }
+    // read the current configuration
+    def configJson = readJSON file: "${configFile}"
+    for (param in configJson.credparams + configJson.jobparams) { 
+      env."${param.name}" = (param.type == "booleanParam") ? "${param.defaultvalue}".toBoolean() : "${param.defaultvalue}"
+    }
+  }
+	
 	  stage("Setup") {
 			deleteDir()
-			if(env.GITLAB_CREDS) {
+			if(env.USE_GIT_CREDS) {
 			  	git url: "${env.GIT_URL}", branch: "${env.GIT_BRANCH}", credentialsId: "${env.GITLAB_CREDS}"
 			} else {
 			  	git url: "${env.GIT_URL}", branch: "${env.GIT_BRANCH}"
@@ -21,7 +37,7 @@ node {
         }
         def piazza_api_key = "empty"
         def piazza_url = "https://piazza.${env.PHASE_ONE_PCF_SPACE}.${env.PIAZZA_URL}"
-        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.BEACHFRONT_PIAZZA_AUTH}", usernameVariable: 'TOKEN', passwordVariable: 'unused']]) {
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "${env.BEACHFRONT_PIAZZA_AUTH}", usernameVariable: 'TOKEN', passwordVariable: 'unused']]) {
             def keyCurl = sh(script: """curl -s ${piazza_url}/v2/key -u \"${TOKEN}:\"""", returnStdout: true)
             piazza_api_key = sh(script: """echo \"${keyCurl}\"|grep -oE '\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12}'""", returnStdout: true).trim()
             sh """
